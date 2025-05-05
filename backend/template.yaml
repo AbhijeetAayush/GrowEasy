@@ -83,6 +83,7 @@ Resources:
                   - lambda:InvokeFunction
                 Resource:
                   - !GetAtt CampaignModuleResources.Outputs.CreateCampaignFunctionArn
+                  - !GetAtt CampaignModuleResources.Outputs.ListCampaignFunctionArn
 
   OutFloApi:
     Type: AWS::Serverless::Api
@@ -106,6 +107,11 @@ Outputs:
   OutFloApi:
     Description: URL of the API Gateway
     Value: !Sub "https://${OutFloApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
   CreateCampaignLambdaArn:
     Description: ARN of the CreateCampaign Lambda Function
     Value: !GetAtt CampaignModuleResources.Outputs.CreateCampaignFunctionArn
+  
+  ListCampaignLambdaArn:
+    Description: ARN of the ListCampaign Lambda Function
+    Value: !GetAtt CampaignModuleResources.Outputs.ListCampaignFunctionArn
