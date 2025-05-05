@@ -1,0 +1,45 @@
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Environment:
+      Variables:
+        ALLOWED_ORIGIN: !Ref AllowedOrigin
+
+Resources:
+  CreateCampaignFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/create/app.handler
+      Runtime: nodejs22.x
+      CodeUri: ../../
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2022
+        Sourcemap: false
+        EntryPoints:
+          - modules/campaign/src/create/app.ts
+        External:
+          - "@aws-sdk/client-dynamodb"
+          - "@aws-sdk/lib-dynamodb"
+
+Parameters:
+  TableName:
+    Type: String
+  AllowedOrigin:
+    Type: String
+
+Outputs:
+  CreateCampaignFunctionArn:
+    Description: ARN of the CreateCampaign Lambda Function
+    Value: !GetAtt CreateCampaignFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CreateCampaignFunctionArn"

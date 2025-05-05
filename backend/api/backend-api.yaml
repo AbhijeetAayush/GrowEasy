@@ -1,0 +1,147 @@
+openapi: "3.0.3"
+info:
+  title:
+    Fn::Sub: "${AWS::StackName}-backend-apis"
+  description:
+    Fn::Sub: "Backend APIs for ${AWS::StackName} in the OutFlo project"
+  version: "1.0"
+paths:
+  /campaigns:
+    post:
+      summary: Create a New Campaign
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCampaignRequestBody"
+        required: true
+      responses:
+        "201":
+          description: Successful response with created campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Bad Request - Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-amazon-apigateway-request-validator: ValidateBody
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CampaignModuleResources.Outputs.CreateCampaignFunctionArn}/invocations"
+        credentials:
+          Fn::Sub: "${RestApiRole.Arn}"
+    options:
+      summary: CORS preflight for /campaigns
+      responses:
+        "200":
+          description: Successful CORS preflight response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+      x-amazon-apigateway-integration:
+        type: "mock"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        requestTemplates:
+          application/json: '{"statusCode": 200}'
+x-amazon-apigateway-request-validators:
+  ValidateBody:
+    validateRequestBody: true
+    validateRequestParameters: false
+components:
+  schemas:
+    CreateCampaignRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: "Campaign 1"
+        description:
+          type: string
+          minLength: 1
+          example: "This is a campaign to find leads"
+        status:
+          type: string
+          enum: ["ACTIVE", "INACTIVE"]
+          default: "ACTIVE"
+        leads:
+          type: array
+          items:
+            type: string
+          example: ["https://linkedin.com/in/profile-1", "https://linkedin.com/in/profile-2"]
+        accountIDs:
+          type: array
+          items:
+            type: string
+          example: ["123", "456"]
+      required:
+        - name
+        - description
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Campaign 1"
+        description:
+          type: string
+          example: "This is a campaign to find leads"
+        status:
+          type: string
+          enum: ["ACTIVE", "INACTIVE", "DELETED"]
+        leads:
+          type: array
+          items:
+            type: string
+          example: ["https://linkedin.com/in/profile-1", "https://linkedin.com/in/profile-2"]
+        accountIDs:
+          type: array
+          items:
+            type: string
+          example: ["123", "456"]
+      required:
+        - id
+        - name
+        - description
+        - status
+        - leads
+        - accountIDs
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "An error occurred"
