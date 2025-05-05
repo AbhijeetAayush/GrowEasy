@@ -54,6 +54,31 @@ Resources:
         External:
           - "@aws-sdk/client-dynamodb"
           - "@aws-sdk/lib-dynamodb"
+  
+  UpdateCampaignFunction:
+    
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/update/app.handler
+      Runtime: nodejs22.x
+      CodeUri: ../../
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2022
+        Sourcemap: false
+        EntryPoints:
+          - modules/campaign/src/update/app.ts
+        External:
+          - "@aws-sdk/client-dynamodb"
+          - "@aws-sdk/lib-dynamodb"
 
 Parameters:
   TableName:
@@ -73,3 +98,9 @@ Outputs:
     Value: !GetAtt ListCampaignFunction.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ListCampaignFunctionArn"
+  
+  UpdateCampaignFunctionArn:
+    Description: ARN of the UpdateCampaign Lambda Function
+    Value: !GetAtt UpdateCampaignFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-UpdateCampaignFunctionArn"

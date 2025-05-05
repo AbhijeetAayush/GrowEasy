@@ -1,4 +1,4 @@
-import { saveItem, getItem, queryItems } from './aws-lib/ddb-utils';
+import { saveItem, getItem, queryItems, updateItem } from './aws-lib/ddb-utils';
 import { Campaign } from '../types/model';
 
 export const createCampaign = async (campaign: Campaign): Promise<void> => {
@@ -67,5 +67,78 @@ export const getCampaign = async (id: string): Promise<Campaign | null> => {
     status: result.Item.status,
     leads: result.Item.leads,
     accountIDs: result.Item.accountIDs,
+  };
+};
+
+export const updateCampaign = async (id: string, updateData: Partial<Campaign>): Promise<Campaign | null> => {
+  const tableName = process.env.TABLE_NAME || '';
+  
+  
+  const existingCampaign = await getItem(tableName, {
+    PK: `CAMPAIGN#${id}`,
+    SK: '#DATA',
+  });
+
+  if (!existingCampaign.Item || existingCampaign.Item.status === 'DELETED') {
+    return null;
+  }
+
+  
+  const updateExpressionParts: string[] = [];
+  const expressionAttributeValues: Record<string, any> = {};
+  const expressionAttributeNames: Record<string, string> = {};
+
+  if (updateData.name !== undefined) {
+    updateExpressionParts.push('#name = :name');
+    expressionAttributeValues[':name'] = updateData.name;
+    expressionAttributeNames['#name'] = 'name';
+  }
+  if (updateData.description !== undefined) {
+    updateExpressionParts.push('#description = :description');
+    expressionAttributeValues[':description'] = updateData.description;
+    expressionAttributeNames['#description'] = 'description';
+  }
+  if (updateData.status !== undefined) {
+    updateExpressionParts.push('#status = :status', 'GSI1PK = :gsi1pk', 'GSI1SK = :gsi1sk');
+    expressionAttributeValues[':status'] = updateData.status;
+    expressionAttributeValues[':gsi1pk'] = `STATUS#${updateData.status}`;
+    expressionAttributeValues[':gsi1sk'] = `CAMPAIGN#${id}`;
+    expressionAttributeNames['#status'] = 'status';
+  }
+  if (updateData.leads !== undefined) {
+    updateExpressionParts.push('#leads = :leads');
+    expressionAttributeValues[':leads'] = updateData.leads;
+    expressionAttributeNames['#leads'] = 'leads';
+  }
+  if (updateData.accountIDs !== undefined) {
+    updateExpressionParts.push('#accountIDs = :accountIDs');
+    expressionAttributeValues[':accountIDs'] = updateData.accountIDs;
+    expressionAttributeNames['#accountIDs'] = 'accountIDs';
+  }
+
+  if (updateExpressionParts.length === 0) {
+    return existingCampaign.Item as Campaign;
+  }
+
+  const updateExpression = `SET ${updateExpressionParts.join(', ')}`;
+
+  const result = await updateItem({
+    tableName,
+    key: {
+      PK: `CAMPAIGN#${id}`,
+      SK: '#DATA',
+    },
+    updateExpression,
+    expressionAttributeValues,
+    expressionAttributeNames,
+  });
+
+  return {
+    id,
+    name: result.Attributes?.name,
+    description: result.Attributes?.description,
+    status: result.Attributes?.status,
+    leads: result.Attributes?.leads,
+    accountIDs: result.Attributes?.accountIDs,
   };
 };

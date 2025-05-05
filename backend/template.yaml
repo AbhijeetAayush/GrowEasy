@@ -84,6 +84,7 @@ Resources:
                 Resource:
                   - !GetAtt CampaignModuleResources.Outputs.CreateCampaignFunctionArn
                   - !GetAtt CampaignModuleResources.Outputs.ListCampaignFunctionArn
+                  - !GetAtt CampaignModuleResources.Outputs.UpdateCampaignFunctionArn
 
   OutFloApi:
     Type: AWS::Serverless::Api
@@ -115,3 +116,7 @@ Outputs:
   ListCampaignLambdaArn:
     Description: ARN of the ListCampaign Lambda Function
     Value: !GetAtt CampaignModuleResources.Outputs.ListCampaignFunctionArn
+  
+  UpdateCampaignLambdaArn:
+    Description: ARN of the UpdateCampaign Lambda Function
+    Value: !GetAtt CampaignModuleResources.Outputs.UpdateCampaignFunctionArn
