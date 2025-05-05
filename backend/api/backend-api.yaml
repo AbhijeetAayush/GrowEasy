@@ -92,7 +92,8 @@ paths:
           default:
             statusCode: "200"
             responseParameters:
-              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,OPTIONS'"
+              
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
         requestTemplates:
@@ -155,7 +156,6 @@ paths:
           content:
             application/json:
               schema:
-                
                 $ref: "#/components/schemas/SuccessResponse"
         "400":
           description: Bad Request - Invalid or missing fields
@@ -181,6 +181,43 @@ paths:
         httpMethod: "POST"
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CampaignModuleResources.Outputs.UpdateCampaignFunctionArn}/invocations"
+        credentials:
+          Fn::Sub: "${RestApiRole.Arn}"
+    delete:
+      
+      summary: Soft Delete a Campaign by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the campaign to delete
+      responses:
+        "200":
+          description: Successful response with deletion confirmation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Campaign Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-amazon-apigateway-request-validator: ValidateParameters
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CampaignModuleResources.Outputs.DeleteCampaignFunctionArn}/invocations"
         credentials:
           Fn::Sub: "${RestApiRole.Arn}"
     options:
@@ -209,7 +246,8 @@ paths:
           default:
             statusCode: "200"
             responseParameters:
-              method.response.header.Access-Control-Allow-Methods: "'GET,PUT,OPTIONS'"
+              
+              method.response.header.Access-Control-Allow-Methods: "'GET,PUT,DELETE,OPTIONS'"
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
         requestTemplates:
@@ -317,7 +355,7 @@ components:
         message:
           type: string
           example: "An error occurred"
-    
+          
     SuccessResponse:
       type: object
       properties:

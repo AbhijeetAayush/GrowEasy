@@ -79,6 +79,31 @@ Resources:
         External:
           - "@aws-sdk/client-dynamodb"
           - "@aws-sdk/lib-dynamodb"
+  
+  DeleteCampaignFunction:
+    # New: Added DeleteCampaignFunction for DELETE /campaigns/:id
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/delete/app.handler
+      Runtime: nodejs22.x
+      CodeUri: ../../
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2022
+        Sourcemap: false
+        EntryPoints:
+          - modules/campaign/src/delete/app.ts
+        External:
+          - "@aws-sdk/client-dynamodb"
+          - "@aws-sdk/lib-dynamodb"
 
 Parameters:
   TableName:
@@ -104,3 +129,9 @@ Outputs:
     Value: !GetAtt UpdateCampaignFunction.Arn
     Export:
       Name: !Sub "${AWS::StackName}-UpdateCampaignFunctionArn"
+  
+  DeleteCampaignFunctionArn:
+    Description: ARN of the DeleteCampaign Lambda Function
+    Value: !GetAtt DeleteCampaignFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-DeleteCampaignFunctionArn"

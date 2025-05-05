@@ -73,7 +73,7 @@ export const getCampaign = async (id: string): Promise<Campaign | null> => {
 export const updateCampaign = async (id: string, updateData: Partial<Campaign>): Promise<Campaign | null> => {
   const tableName = process.env.TABLE_NAME || '';
   
-  
+  // Check if campaign exists and is not deleted
   const existingCampaign = await getItem(tableName, {
     PK: `CAMPAIGN#${id}`,
     SK: '#DATA',
@@ -141,4 +141,39 @@ export const updateCampaign = async (id: string, updateData: Partial<Campaign>):
     leads: result.Attributes?.leads,
     accountIDs: result.Attributes?.accountIDs,
   };
+};
+
+
+export const deleteCampaign = async (id: string): Promise<boolean> => {
+  const tableName = process.env.TABLE_NAME || '';
+
+  
+  const existingCampaign = await getItem(tableName, {
+    PK: `CAMPAIGN#${id}`,
+    SK: '#DATA',
+  });
+
+  if (!existingCampaign.Item) {
+    return false;
+  }
+
+  
+  await updateItem({
+    tableName,
+    key: {
+      PK: `CAMPAIGN#${id}`,
+      SK: '#DATA',
+    },
+    updateExpression: 'SET #status = :status, GSI1PK = :gsi1pk, GSI1SK = :gsi1sk',
+    expressionAttributeValues: {
+      ':status': 'DELETED',
+      ':gsi1pk': 'STATUS#DELETED',
+      ':gsi1sk': `CAMPAIGN#${id}`,
+    },
+    expressionAttributeNames: {
+      '#status': 'status',
+    },
+  });
+
+  return true;
 };
